@@ -16,3 +16,4 @@ obj = StereoCalibration(patternSize, squaresize, single_path, stereo_path, singl
 obj.calibrateStereo(fisheye=False, calib_2_sets=False)
 obj.saveResultsXML()
 obj.saveConf('conf')
+obj.reprojection('output/reprojection/')
