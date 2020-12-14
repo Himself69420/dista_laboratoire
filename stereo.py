@@ -8,7 +8,7 @@ import nanocamera as nano
 
 ################################################################################
 ## PATH TO CALIBRATION FILE : SEE EXAMPLE FOR FORMAT
-calibration_file='/home/christian/Documents/Code_labo/conf.conf'
+calibration_file='conf.conf'
 #calibration_file='/home/dista/Documents/2020/projetdavid/zedinfo/SN24929741_newcam.conf'
 #####################################################################
 
@@ -38,7 +38,7 @@ image_size = Resolution()
 
 
 ##############################################################################
-## INITIALIZE CAMERAS
+# INITIALIZE CAMERAS
 if len(cam_ids)==1:
 
     ## for single USB (left and rigth frames are "glued together )
@@ -46,17 +46,17 @@ if len(cam_ids)==1:
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, width*2)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 else:
+    ### for double USB
+    # cap_left = cv2.VideoCapture(int(cam_ids[0]))
+    # cap_right = cv2.VideoCapture(int(cam_ids[1]))
+    # cap_left.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+    # cap_left.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+    # cap_right.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+    # cap_right.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 
-    ### for double USB 
-    cap_left = cv2.VideoCapture(int(cam_ids[0]))
-    cap_right = cv2.VideoCapture(int(cam_ids[1]))
-    cap_left.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-    cap_left.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-    cap_right.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-    cap_right.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-    #nano.Camera()
-    #cap_left = nano.Camera(device_id=0,flip=2,width=800,height=480,fps=30)
-    #cap_right = nano.Camera(device_id=1,flip=2,width=800,height=480,fps=30)
+    # nano.Camera()
+    cap_left = nano.Camera(device_id=0,flip=2,width=800,height=480,fps=30)
+    cap_right = nano.Camera(device_id=1,flip=2,width=800,height=480,fps=30)
 
 ########################################################################
 
@@ -67,10 +67,10 @@ else:
 camera_matrix_left, camera_matrix_right, map_left_x, map_left_y, map_right_x, map_right_y,Tvec,Rvec,distCoeffs_left,R1,\
 px_left,py_left,px_right,fx,fy = \
 init_calibration(calibration_file,image_size, resolution)
-    
+
 f=(fx+fy)/2
 Tvec=Tvec.flatten()
-Tvec=Tvec/1000    # if base is in milimeters
+Tvec=Tvec   # if base is in milimeters
 base=-Tvec[0]
 ################################################################################
 
@@ -78,7 +78,7 @@ base=-Tvec[0]
 
 ##############################################################################
 # INITIALIZE IMAGE WINDOWS
-windowName = "Live Camera Input" 
+windowName = "Live Camera Input"
 cv2.namedWindow(windowName, cv2.WINDOW_NORMAL)
 cv2.resizeWindow(windowName, width, height)
 ################################################################################
@@ -89,19 +89,19 @@ cv2.resizeWindow(windowName, width, height)
 # IF WANT TO ADJUST IMAGE QUALITY : FOLLOW INSTRUCTION ON TERMINAL RIGHT CAMERA
 # WILL TAKE SAME VALUES AS LEFT CAMERA
 # MAKE SURE TO SELECT THE WINDOW WITH THE MOUSE
-if adjust:    
+if adjust:
     if len(cam_ids)==2:
         opencv_adjust([cap_left,cap_right],windowName)
     else:
         opencv_adjust([cap],windowName)
 ################################################################################
-        
+
 
 
 
 ##############################################################################
 # INITIALIZE DISPARITY WINDOWS
-windowNameD = "Stereo Disparity" 
+windowNameD = "Stereo Disparity"
 cv2.namedWindow(windowNameD, cv2.WINDOW_NORMAL)
 cv2.resizeWindow(windowNameD, width, 2*height)
 cv2.moveWindow(windowNameD,1000,0)  # Move it to (40,30)
@@ -149,25 +149,25 @@ wls_filter.setSigmaColor(sigma)
 create_tackbar(windowNameD,num_disp,min_disp,wsize,lambd,sigma,width,height,left_matcher,wls_filter)
 keep_processing = True
 startime = time.time()
-ff=0    
+ff=0
 
 while (keep_processing):
-    
+
 
 #   GET FRAME
     if len(cam_ids)==1:
         ret,frame=cap.read()
         frames = np.split(frame, 2, axis=1)
-        frameL=frames[0] 
+        frameL=frames[0]
         frameR=frames[1]
     else:
-        ret,frameL=cap_left.read()    
-        ret,frameR=cap_right.read()    
+        ret,frameL=cap_left.read()
+        ret,frameR=cap_right.read()
 
 
 #    RECTIFIY
     grayL,grayR=\
-    get_rectified_left_right(frameL,frameR, map_left_x, map_left_y, map_right_x, map_right_y)   
+    get_rectified_left_right(frameL,frameR, map_left_x, map_left_y, map_right_x, map_right_y)
 
 #   STORE FOR DISPLAY LATER
     frame=[grayL,grayR]
@@ -182,19 +182,19 @@ while (keep_processing):
     downscale=2
     new_num_disp = int(num_disp / downscale)
     n_width = int(grayL.shape[1] * 1/downscale)
-    n_height = int(grayR.shape[0] * 1/downscale) 
+    n_height = int(grayR.shape[0] * 1/downscale)
     grayL_down = cv2.resize(grayL, (n_width, n_height))
     grayR_dowm = cv2.resize(grayR,(n_width, n_height))
-    
+
 
 #   SMOOTH
-    grayL_down = cv2.medianBlur(grayL_down,3)  
-    grayR_dowm = cv2.medianBlur(grayR_dowm,3) 
+    grayL_down = cv2.medianBlur(grayL_down,3)
+    grayR_dowm = cv2.medianBlur(grayR_dowm,3)
 
 
 
     # COMPUTE AND FILTER DISPARITY
-    displ = left_matcher.compute(cv2.UMat(grayL_down),cv2.UMat(grayR_dowm))  
+    displ = left_matcher.compute(cv2.UMat(grayL_down),cv2.UMat(grayR_dowm))
     dispr = right_matcher.compute(cv2.UMat(grayR_dowm),cv2.UMat(grayL_down))
     displ = np.int16(cv2.UMat.get(displ))
     dispr = np.int16(cv2.UMat.get(dispr))
@@ -205,7 +205,7 @@ while (keep_processing):
     # FILTER SPECKLES DONE SEPARALTY AS POST PROCESSING FROM VALUE ON TRACK BAR
     speckleSize = cv2.getTrackbarPos("Speckle Size: ", windowNameD)
     maxSpeckleDiff = cv2.getTrackbarPos("Max Speckle Diff: ", windowNameD)
-    cv2.filterSpeckles(disparity, 0, speckleSize, maxSpeckleDiff)  
+    cv2.filterSpeckles(disparity, 0, speckleSize, maxSpeckleDiff)
 
 
     # FORMAT DISPARITY
@@ -220,11 +220,11 @@ while (keep_processing):
     Y=np.tile(np.arange(int(height)),[int(width),1])
     Y=Y.transpose((1,0))-py_left
     Y=Y*Z/f
-    
+
     # DEFINED POINT CLOUD AND DEPTH MAP (Z COORDINATE)
-    cloud=np.stack((X,Y,Z),axis=-1)    
+    cloud=np.stack((X,Y,Z),axis=-1)
     depth_map=cv2.UMat(cloud[:,:,2])
-    
+
     if depthmap:
         displaymap=depth_map
     else:
@@ -241,15 +241,15 @@ while (keep_processing):
     cv2.line(displaymap, (int(width / 2), int(height / 2) - 20), (int(width / 2), int(height / 2) + 20), (255, 255, 255), 2)
     cv2.line(frame[0], (int(width / 2) - 20, int(height / 2)), (int(width / 2) + 20, int(height / 2)), (255, 255, 255), 2)
     cv2.line(frame[0], (int(width / 2), int(height / 2) - 20), (int(width / 2), int(height / 2) + 20), (255, 255, 255), 2)
-        
-    
+
+
     # DISPLAY DISTANCE OF DEPTH ON IMAGE
     center = cloud[int(height / 2), int(width / 2),:]  # center pixel x,y,z values
     if distance:
         display= np.round(np.linalg.norm(center),2)  # DISTANCE
     else:
         display=center[2]  # DEPTH
-    text = str(np.round(display,2))  
+    text = str(np.round(display,2))
     cv2.putText(frame[0], text,(230,50), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 2)
 
 
@@ -261,14 +261,14 @@ while (keep_processing):
     cv2.imshow(windowName,np.concatenate((frame[0],frame[1]),1))
 
     key = cv2.waitKey(1)
-    
+
     ff=ff+1
     elapsed = time.time() - startime
     fps = int(ff/elapsed)
-    print("Frame rate : " + str(fps) + " FPS"+ "\n") 
-    
+    print("Frame rate : " + str(fps) + " FPS"+ "\n")
+
     cv2.setMouseCallback(windowName,on_mouse_display_depth_value, (f, base,distance,cloud,frame,windowName))
-        
+
     if key == 27 :
         break
 ################################################################################

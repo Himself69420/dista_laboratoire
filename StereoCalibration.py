@@ -34,7 +34,7 @@ class StereoCalibration():
         self.single_detected_path=single_detected_path
         self.stereo_detected_path=stereo_detected_path
 
-        # Créer/Vider les folders
+        # Créer/Vider les folders ou enregistrer les coins détectés
         outputClean([single_detected_path,stereo_detected_path])
 
         # Déclaration des variables
@@ -95,6 +95,7 @@ class StereoCalibration():
         if not skipdetection:
             self.objpoints_l, self.imgpoints_l, self.imageSize1 = self.read_single('left')
             self.objpoints_r, self.imgpoints_r, self.imageSize2 = self.read_single('right')
+
         if fisheye==True:
             self.err1, self.M1, self.d1, self.r1, self.t1, stdDeviationsIntrinsics1, stdDeviationsExtrinsics1, self.perViewErrors1 = cv2.calibrateCameraExtended(self.objpoints_l, self.imgpoints_l, self.imageSize1, None, None, flags=self.fisheye_flags)
 
@@ -197,9 +198,9 @@ class StereoCalibration():
         f.write('Erreur cam 2: {}\n'.format(self.err2))
         f.write('Erreur stéréo: {}\n'.format(self.errStereo))
         f.close()
-        
+
     def saveConf(self, fname):
-        
+
         # On extrait les valeurs qui nous intéresse dans la matrice gauche
         fx_l = self.M1[0][0]
         cx_l = self.M1[0][2]
@@ -210,7 +211,7 @@ class StereoCalibration():
         k3_l = self.d1[0][4]
         p1_l = self.d1[0][2]
         p2_l = self.d1[0][3]
-        
+
         # On extrait les valeurs qui nous intéresse dans la matrice droite
         fx_r = self.M2[0][0]
         cx_r = self.M2[0][2]
@@ -268,4 +269,3 @@ class StereoCalibration():
 
         # for j in range(len(self.imgpoints_r)):
         #     draw_reprojection(cv2.imread(images_right[j]), self.objpoints_r[j], self.imgpoints_r[j], self.M2, self.d2, self.patternSize, self.squaresize, folder, j)
-

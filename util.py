@@ -19,7 +19,7 @@ def find_corners(fname,patternSize):
     ret, corners = cv2.findChessboardCorners(gray, patternSize, None)
     return ret, corners, color
 
-def refine_corners(patternSize, objpoints, imgpoints, objp, corners, color, criteria, detected_path, view, i, p=False):
+def refine_corners(patternSize, objpoints, imgpoints, objp, corners, color, criteria, detected_path, view, i, p=True):
     # Quand les coins sont trouvés et rafinés on les ajoute au tableau de point 3D
     if objpoints != None:
         objpoints.append(objp)
