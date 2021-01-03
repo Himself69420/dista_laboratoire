@@ -7,6 +7,14 @@ from util import readXML
 
 
 ##############################################################################
+class Resolution :
+    def __init__(self,width, height):
+        self.width = int(width)
+        self.height = int( height)
+##############################################################################
+
+
+##############################################################################
 # FIVE BASIC ARGUMENTS TO STEREO.PY
 # --adjust : adjust image quality : escape by pressing "q", follow instruction on terminal MAKE SURE TO SELECT THE WINDOW WITH THE MOUSE
 # --resolution : string (VGA,HD,FHD,...)
@@ -61,67 +69,14 @@ def get_image_dimension_from_resolution(resolution):
 # THIS FONCTION READS CALIBRATION FILE AND OUTPUTS MATRICES AND COEFFICIENTS
 ## SEE EXAMPLE SN20716499.conf FOR CORRECT FORMAT
 
-def init_calibration(calibration_file, image_size, resolution) :
+def init_calibration(left_xml, right_xml, image_size, resolution) :
 
 
     # READ .XML FILE -------
-    cameraMatrix_left,distCoeffs_left, _, _ ,_, E, F = readXML('cam1.xml') # left
-    cameraMatrix_right,distCoeffs_right, R, T ,_, _, _ = readXML('cam2.xml') # right
+    cameraMatrix_left,distCoeffs_left, _, _ ,_, E, F = readXML(left_xml) # left
+    cameraMatrix_right,distCoeffs_right, R, T ,_, _, _ = readXML(right_xml) # right
 
-
-    # READ CONFIG FILE -------
-    config = configparser.ConfigParser()
-    config.read(calibration_file)
-
-    # T_ = np.array([-float(config['STEREO']['Baseline'] if 'Baseline' in config['STEREO'] else 0),
-    #                float(config['STEREO']['TY_'+resolution] if 'TY_'+resolution in config['STEREO'] else 0),
-    #                float(config['STEREO']['TZ_'+resolution] if 'TZ_'+resolution in config['STEREO'] else 0)])
-
-
-    left_cam_cx = float(config['LEFT_CAM_'+resolution]['cx'] if 'cx' in config['LEFT_CAM_'+resolution] else 0)
-    left_cam_cy = float(config['LEFT_CAM_'+resolution]['cy'] if 'cy' in config['LEFT_CAM_'+resolution] else 0)
-    left_cam_fx = float(config['LEFT_CAM_'+resolution]['fx'] if 'fx' in config['LEFT_CAM_'+resolution] else 0)
-    left_cam_fy = float(config['LEFT_CAM_'+resolution]['fy'] if 'fy' in config['LEFT_CAM_'+resolution] else 0)
-    left_cam_k1 = float(config['LEFT_CAM_'+resolution]['k1'] if 'k1' in config['LEFT_CAM_'+resolution] else 0)
-    left_cam_k2 = float(config['LEFT_CAM_'+resolution]['k2'] if 'k2' in config['LEFT_CAM_'+resolution] else 0)
-    left_cam_p1 = float(config['LEFT_CAM_'+resolution]['p1'] if 'p1' in config['LEFT_CAM_'+resolution] else 0)
-    left_cam_p2 = float(config['LEFT_CAM_'+resolution]['p2'] if 'p2' in config['LEFT_CAM_'+resolution] else 0)
-#    left_cam_p3 = float(config['LEFT_CAM_'+resolution]['p3'] if 'p3' in config['LEFT_CAM_'+resolution] else 0)
-    left_cam_k3 = float(config['LEFT_CAM_'+resolution]['k3'] if 'k3' in config['LEFT_CAM_'+resolution] else 0)
-
-
-    right_cam_cx = float(config['RIGHT_CAM_'+resolution]['cx'] if 'cx' in config['RIGHT_CAM_'+resolution] else 0)
-    right_cam_cy = float(config['RIGHT_CAM_'+resolution]['cy'] if 'cy' in config['RIGHT_CAM_'+resolution] else 0)
-    right_cam_fx = float(config['RIGHT_CAM_'+resolution]['fx'] if 'fx' in config['RIGHT_CAM_'+resolution] else 0)
-    right_cam_fy = float(config['RIGHT_CAM_'+resolution]['fy'] if 'fy' in config['RIGHT_CAM_'+resolution] else 0)
-    right_cam_k1 = float(config['RIGHT_CAM_'+resolution]['k1'] if 'k1' in config['RIGHT_CAM_'+resolution] else 0)
-    right_cam_k2 = float(config['RIGHT_CAM_'+resolution]['k2'] if 'k2' in config['RIGHT_CAM_'+resolution] else 0)
-    right_cam_p1 = float(config['RIGHT_CAM_'+resolution]['p1'] if 'p1' in config['RIGHT_CAM_'+resolution] else 0)
-    right_cam_p2 = float(config['RIGHT_CAM_'+resolution]['p2'] if 'p2' in config['RIGHT_CAM_'+resolution] else 0)
-#    right_cam_p3 = float(config['RIGHT_CAM_'+resolution]['p3'] if 'p3' in config['RIGHT_CAM_'+resolution] else 0)
-    right_cam_k3 = float(config['RIGHT_CAM_'+resolution]['k3'] if 'k3' in config['RIGHT_CAM_'+resolution] else 0)
-
-    # R_zed = np.array([float(config['STEREO']['RX_'+resolution] if 'RX_' + resolution in config['STEREO'] else 0),
-    #                   float(config['STEREO']['CV_'+resolution] if 'CV_' + resolution in config['STEREO'] else 0),
-    #                   float(config['STEREO']['RZ_'+resolution] if 'RZ_' + resolution in config['STEREO'] else 0)])
-    #
-    R_zed, _ = cv2.Rodrigues(R)
-    # cameraMatrix_left = np.array([[left_cam_fx, 0, left_cam_cx],
-    #                      [0, left_cam_fy, left_cam_cy],
-    #                      [0, 0, 1]])
-    #
-    # cameraMatrix_right = np.array([[right_cam_fx, 0, right_cam_cx],
-    #                       [0, right_cam_fy, right_cam_cy],
-    #                       [0, 0, 1]])
-    #
-    # distCoeffs_left = np.array([[left_cam_k1], [left_cam_k2], [left_cam_p1], [left_cam_p2], [left_cam_k3]])
-    #
-    # distCoeffs_right = np.array([[right_cam_k1], [right_cam_k2], [right_cam_p1], [right_cam_p2], [right_cam_k3]])
-
-    # T = np.array([[T_[0]], [T_[1]], [T_[2]]])
-    R1 = R2 = P1 = P2 = np.array([])
-
-    R1, R2, P1, P2 = cv2.stereoRectify(cameraMatrix1=cameraMatrix_left,
+    R1, R2, P1, P2, Q, _, _ = cv2.stereoRectify(cameraMatrix1=cameraMatrix_left,
                                        cameraMatrix2=cameraMatrix_right,
                                        distCoeffs1=distCoeffs_left,
                                        distCoeffs2=distCoeffs_right,
@@ -129,7 +84,7 @@ def init_calibration(calibration_file, image_size, resolution) :
                                        flags=cv2.CALIB_ZERO_DISPARITY,
                                        alpha=0,
                                        imageSize=(image_size.width, image_size.height),
-                                       newImageSize=(image_size.width, image_size.height))[0:4]
+                                       newImageSize=(image_size.width, image_size.height))
 
     map_left_x, map_left_y = cv2.initUndistortRectifyMap(cameraMatrix_left, distCoeffs_left, R1, P1, (image_size.width, image_size.height), cv2.CV_32FC1)
     map_right_x, map_right_y = cv2.initUndistortRectifyMap(cameraMatrix_right, distCoeffs_right, R2, P2, (image_size.width, image_size.height), cv2.CV_32FC1)
@@ -137,7 +92,7 @@ def init_calibration(calibration_file, image_size, resolution) :
     cameraMatrix_left = P1
     cameraMatrix_right = P2
 
-    return cameraMatrix_left, cameraMatrix_right, map_left_x, map_left_y, map_right_x, map_right_y,T,R_zed,distCoeffs_left,R1 ,left_cam_cx,left_cam_cy,right_cam_cx,left_cam_fx,left_cam_fy
+    return cameraMatrix_left, cameraMatrix_right, map_left_x, map_left_y, map_right_x, map_right_y, Q
 
 ###############################################################################
 

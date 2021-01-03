@@ -6,10 +6,65 @@ Auteur: Marinouille
 import os, cv2
 import numpy as np
 
+
+def coins_damier(patternSize,squaresize):
+    objp = np.zeros((patternSize[0]*patternSize[1], 3), np.float32)
+    objp[:, :2] = np.mgrid[0:patternSize[0], 0:patternSize[1]].T.reshape(-1, 2)
+    objp*=squaresize
+    return objp
+
+def centres_damier(patternSize,squaresize):
+    objp = np.zeros(((patternSize[0]-1)*(patternSize[1]-1), 3), np.float32)
+    objp[:, :2] = np.mgrid[0:patternSize[0]-1, 0:patternSize[1]-1].T.reshape(-1, 2)
+    objp*=squaresize
+    objp+=np.array([0.5,0.5,0])*squaresize
+    return objp
+
 def read_images(image):
     color=cv2.imread(image)
     gray=cv2.cvtColor(color, cv2.COLOR_BGR2GRAY)
     return color, gray
+
+# draw the provided lines on the image
+def drawlines(img,lines,pts):
+    ''' img - image on which we draw the epilines for the points in other image
+    '''
+    _,c,_ = img.shape
+    img_=img.copy()
+    for r,pt in zip(lines,pts):
+        color = tuple(np.random.randint(0,255,3).tolist())
+        x0,y0 = map(int, [0, -r[2]/r[1] ])
+        x1,y1 = map(int, [c, -(r[2]+r[0]*c)/r[1] ])
+        img_ = cv.line(img_, (x0,y0), (x1,y1), color,1)
+        img_ = cv.circle(img_,tuple(pt[0]),5,color,-1)
+    return img_
+
+
+
+def write_ply(fn, verts, colors):
+    ply_header = '''ply
+    format ascii 1.0
+    element vertex %(vert_num)d
+    property float x
+    property float y
+    property float z
+    property uchar red
+    property uchar green
+    property uchar blue
+    end_header
+    '''
+    verts = verts.reshape(-1, 3)
+    colors = colors.reshape(-1, 3)
+    verts = np.hstack([verts, colors])
+    with open(fn, 'wb') as f:
+        f.write((ply_header % dict(vert_num=len(verts))).encode('utf-8'))
+        np.savetxt(f, verts, fmt='%f %f %f %d %d %d ')
+
+
+def combine(left, right):
+    im = np.concatenate((left,right), axis=1)
+    return im
+
 
 def find_corners(fname,patternSize):
     color = cv2.imread(fname)
@@ -19,7 +74,7 @@ def find_corners(fname,patternSize):
     ret, corners = cv2.findChessboardCorners(gray, patternSize, None)
     return ret, corners, color
 
-def refine_corners(patternSize, objpoints, imgpoints, objp, corners, color, criteria, detected_path, view, i, p=True):
+def refine_corners(patternSize, objpoints, imgpoints, objp, corners, color, criteria, detected_path, view, i, p=False):
     # Quand les coins sont trouvés et rafinés on les ajoute au tableau de point 3D
     if objpoints != None:
         objpoints.append(objp)
@@ -33,7 +88,7 @@ def refine_corners(patternSize, objpoints, imgpoints, objp, corners, color, crit
         cv2.imwrite(detected_path + fname, color)
 
 
-def outputClean(output_paths):
+def clean_folders(output_paths):
     for path in output_paths:
         if not os.path.exists(path):
             os.makedirs(path)

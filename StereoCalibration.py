@@ -2,56 +2,58 @@ import numpy as np
 import cv2
 import glob, os
 
-from util import find_corners, refine_corners, draw_reprojection, outputClean
+from util import find_corners, refine_corners, draw_reprojection, clean_folders, coins_damier
 
 
 # Classe contenant les fonctions de calibration
 class StereoCalibration():
 
-    """
-    patternSize = (nb points per row, nb points per col)
-    squaresize : taille damier en mètres
-    """
-    # Paramètres D'initialisation
-    def __init__(self, patternSize, squaresize, single_path, stereo_path, single_detected_path, stereo_detected_path):
-        # Critères de terminaison
+    def __init__(self, patternSize, squaresize):
+        """
+        || Constructeur ||
+        patternSize = (nb points per row, nb points per col)
+        squaresize : taille damier en mètres
+        """
+
+        # Damier
+        self.patternSize=patternSize
+        self.squaresize=squaresize #utiliser des unités SI svp
+        self.objp = coins_damier(patternSize,squaresize)
+
+        # Critères
         self.criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
         self.criteria_cal = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 1e-5)
 
-        self.patternSize=patternSize
-        self.squaresize=squaresize #utiliser des unités SI svp
-        # Déclaration des points 3D et taille du damier 7x7
-        self.objp = np.zeros((patternSize[0]*patternSize[1], 3), np.float32)
-        self.objp[:, :2] = np.mgrid[0:patternSize[0], 0:patternSize[1]].T.reshape(-1, 2)
-        # Taille des carreaux sur le damier en mètres
-        self.objp*=self.squaresize
-
-        # Folders contenant les images à analyser
-        self.single_path=single_path
-        self.stereo_path=stereo_path
-
-        # Folders ou enregistrer les images détectées
-        self.single_detected_path=single_detected_path
-        self.stereo_detected_path=stereo_detected_path
-
-        # Créer/Vider les folders ou enregistrer les coins détectés
-        outputClean([single_detected_path,stereo_detected_path])
-
-        # Déclaration des variables
-        self.imageSize1, self.imageSize2 = None, None
-        self.err1, self.M1, self.d1, self.r1, self.t1 = None, None, None, None, None
-        self.err2, self.M2, self.d2, self.r2, self.t2 = None, None, None, None, None
-        self.errStereo, self.R, self.T = None, None, None,
-
-        # Flags:
+        # Flags de claibration
         self.not_fisheye_flags = cv2.CALIB_FIX_K3|cv2.CALIB_ZERO_TANGENT_DIST
+        # self.not_fisheye_flags=0
         self.fisheye_flags=cv2.CALIB_RATIONAL_MODEL|cv2.CALIB_FIX_K5|cv2.CALIB_FIX_K6|cv2.CALIB_ZERO_TANGENT_DIST
 
 
+        # Déclaration des attributs --------------------------------------------
 
-    def read_single(self, view):
+        # Folders contenant les images à analyser
+        self.single_path=None
+        self.stereo_path=None
+
+        # Folders ou enregistrer les images détectées
+        self.single_detected_path=None
+        self.stereo_detected_path=None
+
+        # Variables pour la calibration
+        self.imageSize1, self.imageSize2 = None, None
+        self.err1, self.M1, self.d1, self.r1, self.t1 = None, None, None, None, None
+        self.err2, self.M2, self.d2, self.r2, self.t2 = None, None, None, None, None
+        self.errStereo, self.R, self.T = None, None, None
+        # points de la calibration individuelle
+        self.objpoints_l,self.objpoints_r, self.imgpoints_l, self.imgpoints_r=None, None, None, None
+        # ----------------------------------------------------------------------
+
+
+
+    def __read_single(self, view):
         """
-        single_path  (str): './<folder>/'
+        ||Private method||
         view  (str): 'left' ou 'right'
         """
         images = np.sort(glob.glob(self.single_path + '{}*.jpg'.format(view)))
@@ -67,7 +69,10 @@ class StereoCalibration():
         return objpoints, imgpoints, image_shape[:2]
 
 
-    def read_stereo(self):
+    def __read_stereo(self):
+        """
+        ||Private method||
+        """
         images_right = np.sort(glob.glob(self.stereo_path + 'left*.jpg'))
         images_left = np.sort(glob.glob(self.stereo_path + 'right*.jpg'))
         assert (len(images_right) != 0 or len(images_left) != 0  ), "Images pas trouvées. Vérifier le path"
@@ -89,12 +94,22 @@ class StereoCalibration():
 
         return objpoints, imgpoints_l, imgpoints_r
 
-    def calibrateSingle(self, fisheye=False, skipdetection=False):
-        """On calibre les deux caméras indépendament et sauvegarde les valeurs de calibration
+    def calibrateSingle(self, single_path, single_detected_path, fisheye=False):
         """
-        if not skipdetection:
-            self.objpoints_l, self.imgpoints_l, self.imageSize1 = self.read_single('left')
-            self.objpoints_r, self.imgpoints_r, self.imageSize2 = self.read_single('right')
+        ||Public method||
+        Calibration individuelle de 2 caméras
+
+        Args:
+            single_path (str): "path_to_single_images/"
+            single_detected_path (str): "path_to_single_images_detected/"
+            fisheye (Bool): True pour caméra fisheye
+        """
+        self.single_path=single_path
+        self.single_detected_path=single_detected_path
+        clean_folders([single_detected_path])
+
+        self.objpoints_l, self.imgpoints_l, self.imageSize1 = self.__read_single('left')
+        self.objpoints_r, self.imgpoints_r, self.imageSize2 = self.__read_single('right')
 
         if fisheye==True:
             self.err1, self.M1, self.d1, self.r1, self.t1, stdDeviationsIntrinsics1, stdDeviationsExtrinsics1, self.perViewErrors1 = cv2.calibrateCameraExtended(self.objpoints_l, self.imgpoints_l, self.imageSize1, None, None, flags=self.fisheye_flags)
@@ -111,30 +126,39 @@ class StereoCalibration():
         print(self.err1, self.err2)
 
 
-    def calibrateStereo(self, fisheye=False, calib_2_sets=False):
+    def calibrateStereo(self, stereo_path, stereo_detected_path, fisheye=False, calib_2_sets=False, single_path=None, single_detected_path=None):
         """
-        calib_2_sets (Bool)
-        True: pour utiliser des sets de photos différents
-            - un pour la calibration individuelle des caméras
-            - un pour la calibration stéréo
-        False: pour utiliser un seul set de photo pour la calibration individuelle et la calibration stéréo
+        ||Public method||
+        Args:
+            stereo_path (str): "path_to_stereo_images/"
+            fisheye (Bool): True pour caméra fisheye
+            calib_2_sets (Bool):
+                True: pour utiliser des sets de photos différents (un pour la calibration individuelle des caméra et un pour la calibration stéréo)
+                False: pour utiliser un seul set de photo pour la calibration individuelle et la calibration stéréo
+            single_path: "path_to_single_images/"
         """
+        self.stereo_path=stereo_path
+        self.stereo_detected_path=stereo_detected_path
+        clean_folders([stereo_detected_path])
+        if not calib_2_sets:
+            single_path=stereo_path
+            single_detected_path=stereo_detected_path
 
         # faire calibration individuelle avant
         if self.err1==None or self.err2==None:
-            self.calibrateSingle(fisheye)
+            self.calibrateSingle(single_path, single_detected_path, fisheye)
 
         # deux sets ou un set
         if calib_2_sets:
             flags = cv2.CALIB_FIX_INTRINSIC
-            objpoints, imgpoints_l, imgpoints_r = self.read_stereo()
+            objpoints, imgpoints_l, imgpoints_r = self.__read_stereo()
         else:
             flags = cv2.CALIB_USE_INTRINSIC_GUESS
             if len(self.imgpoints_l) == len(self.imgpoints_r):
                 # Si le même nombre d'images sont détectées à gauche et à droite, on assume que ce sont les même et ça évite de re-détecter des points (à surveiller quand même)
                 objpoints, imgpoints_l, imgpoints_r = self.objpoints_l, self.imgpoints_l, self.imgpoints_r
             else:
-                objpoints, imgpoints_l, imgpoints_r = self.read_stereo()
+                objpoints, imgpoints_l, imgpoints_r = self.__read_stereo()
 
         # caméra fisheye
         if fisheye:
@@ -258,14 +282,22 @@ class StereoCalibration():
 
     def reprojection(self, folder):
         """ Dessiner la reprojection """
-        # outputClean([folder])
+        clean_folders([folder])
 
         images_left = np.sort(glob.glob(self.single_path + 'left*.jpg'))
         images_right = np.sort(glob.glob(self.single_path + 'right*.jpg'))
         assert (len(images_right) != 0 or len(images_left) != 0  ), "Images pas trouvées. Vérifier le path"
 
-        for i in range(len(self.imgpoints_l)):
-            draw_reprojection(cv2.imread(images_left[i]), self.objpoints_l[i], self.imgpoints_l[i], self.M1, self.d1, self.patternSize, self.squaresize, folder, i)
+        index=0
+        for i in range(len(images_left)):
+            ret_l, corners_l, gray_l = find_corners(images_left[i], self.patternSize)
+            if ret_l==True:
+                draw_reprojection(cv2.imread(images_left[i]), self.objpoints_l[index], self.imgpoints_l[index], self.M1, self.d1, self.patternSize, self.squaresize, folder, i)
+                index+=1
 
-        # for j in range(len(self.imgpoints_r)):
-        #     draw_reprojection(cv2.imread(images_right[j]), self.objpoints_r[j], self.imgpoints_r[j], self.M2, self.d2, self.patternSize, self.squaresize, folder, j)
+        jndex=0
+        for j in range(len(images_right)):
+            ret_r, corners_r, gray_r = find_corners(images_right[j], self.patternSize)
+            if ret_r==True:
+                draw_reprojection(cv2.imread(images_right[j]), self.objpoints_r[jndex], self.imgpoints_r[jndex], self.M2, self.d2, self.patternSize, self.squaresize, folder, j)
+                jndex+=1

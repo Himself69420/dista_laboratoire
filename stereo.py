@@ -8,8 +8,8 @@ import nanocamera as nano
 
 ################################################################################
 ## PATH TO CALIBRATION FILE : SEE EXAMPLE FOR FORMAT
-calibration_file='conf.conf'
-#calibration_file='/home/dista/Documents/2020/projetdavid/zedinfo/SN24929741_newcam.conf'
+left_xml='cam1.xml'
+right_xml='cam2.xml'
 #####################################################################
 
 
@@ -28,7 +28,6 @@ distance=args.distance
 #############################################################
 ## DEFINE RESOLUTION AND GET IMAGE SIZE
 width,height = get_image_dimension_from_resolution(resolution)
-
 class Resolution :
     width = int( width)
     height = int( height)
@@ -64,14 +63,7 @@ else:
 
 #############################################################################
 ## GET ALL CAMERA MATRICES AND COEFFICIENTS
-camera_matrix_left, camera_matrix_right, map_left_x, map_left_y, map_right_x, map_right_y,Tvec,Rvec,distCoeffs_left,R1,\
-px_left,py_left,px_right,fx,fy = \
-init_calibration(calibration_file,image_size, resolution)
-
-f=(fx+fy)/2
-Tvec=Tvec.flatten()
-Tvec=Tvec   # if base is in milimeters
-base=-Tvec[0]
+camera_matrix_left, camera_matrix_right, map_left_x, map_left_y, map_right_x, map_right_y, Q = init_calibration(left_xml, right_xml,image_size, resolution)
 ################################################################################
 
 
@@ -178,7 +170,7 @@ while (keep_processing):
     grayR = cv2.cvtColor(grayR,cv2.COLOR_BGR2GRAY)
 
 
- ##    DOWNSCALE
+##    DOWNSCALE
     downscale=2
     new_num_disp = int(num_disp / downscale)
     n_width = int(grayL.shape[1] * 1/downscale)
@@ -192,7 +184,6 @@ while (keep_processing):
     grayR_dowm = cv2.medianBlur(grayR_dowm,3)
 
 
-
     # COMPUTE AND FILTER DISPARITY
     displ = left_matcher.compute(cv2.UMat(grayL_down),cv2.UMat(grayR_dowm))
     dispr = right_matcher.compute(cv2.UMat(grayR_dowm),cv2.UMat(grayL_down))
@@ -200,29 +191,17 @@ while (keep_processing):
     dispr = np.int16(cv2.UMat.get(dispr))
     disparity = wls_filter.filter(displ, grayL, None, dispr)
 
-
-
     # FILTER SPECKLES DONE SEPARALTY AS POST PROCESSING FROM VALUE ON TRACK BAR
     speckleSize = cv2.getTrackbarPos("Speckle Size: ", windowNameD)
     maxSpeckleDiff = cv2.getTrackbarPos("Max Speckle Diff: ", windowNameD)
     cv2.filterSpeckles(disparity, 0, speckleSize, maxSpeckleDiff)
 
-
     # FORMAT DISPARITY
     disparity =disparity.astype(np.float32) / 16.0
 
-
-#   COMPUTE X,Y Z COORDINATES
-    Z=np.divide( f*base, np.power(disparity,1), np.zeros_like(disparity), where=disparity!=0)
-    X=np.tile(np.arange(int(width)),[int(height),1])
-    X = X-px_left
-    X= X*Z / f
-    Y=np.tile(np.arange(int(height)),[int(width),1])
-    Y=Y.transpose((1,0))-py_left
-    Y=Y*Z/f
-
-    # DEFINED POINT CLOUD AND DEPTH MAP (Z COORDINATE)
-    cloud=np.stack((X,Y,Z),axis=-1)
+    # COMPUTE X,Y Z COORDINATES
+    # DEFINE POINT CLOUD AND DEPTH MAP (Z COORDINATE)
+    cloud = cv2.reprojectImageTo3D(disparity, Q, handleMissingValues=True)
     depth_map=cv2.UMat(cloud[:,:,2])
 
     if depthmap:
