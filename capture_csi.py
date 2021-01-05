@@ -28,8 +28,8 @@ clean_folder(folder)
 
 # Déclaration du périphérique de capture
 nano.Camera()
-cap_left = nano.Camera(device_id=0,width=800,height=480,fps=30)
-cap_right = nano.Camera(device_id=1,width=800,height=480,fps=30)
+cap_left = nano.Camera(device_id=0, flip=2, width=800,height=480,fps=30)
+cap_right = nano.Camera(device_id=1, flip=2, width=800,height=480,fps=30)
 
 while(True):
     if capture_taken==0:
