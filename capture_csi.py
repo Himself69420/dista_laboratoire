@@ -14,7 +14,6 @@ from modules.util import clean_folders
 text_title="Assistant de calibration"
 text_progress=""
 
-
 # Nombres de captures prises
 capture_taken=0
 # Nombres de captures à prendre et folder
@@ -23,7 +22,7 @@ folder="captures/captures_calibration/"
 
 # capture_qty=15
 # folder="captures/captures_erreur/"
-clean_folders(folder)
+clean_folders([folder])
 
 
 # Déclaration du périphérique de capture
