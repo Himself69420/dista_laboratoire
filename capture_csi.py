@@ -8,7 +8,7 @@
 import cv2
 import nanocamera as nano
 
-from modules.util import clean_folder
+from modules.util import clean_folders
 
 # Variables textuel
 text_title="Assistant de calibration"
