@@ -129,7 +129,7 @@ right_matcher = cv2.ximgproc.createRightMatcher(left_matcher)
 
 
 lambd = 8000
-sigma = 5
+sigma = 1.25 #entre 0.5 et 2
 wls_filter = cv2.ximgproc.createDisparityWLSFilter(matcher_left=left_matcher)
 wls_filter.setLambda(lambd)
 wls_filter.setSigmaColor(sigma)
