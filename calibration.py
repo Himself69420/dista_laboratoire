@@ -3,8 +3,8 @@ from modules.util import *
 
 # ================ PARAMETRES ========================
 
-patternSize=(10,8)
-squaresize=2e-2
+patternSize=(9,6)
+squaresize=3.62e-2
 # single_path='stereo/'
 stereo_path='captures/captures_calibration/'
 single_detected_path='output/singles_detected/'
