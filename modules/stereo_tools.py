@@ -3,7 +3,7 @@ import cv2
 import configparser
 import math
 import argparse
-from util import readXML
+from modules.util import readXML
 
 
 ##############################################################################

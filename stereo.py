@@ -2,8 +2,9 @@
 import cv2
 import numpy as np
 import time
-from stereo_tools import *
 import nanocamera as nano
+
+from modules.stereo_tools import *
 #########################################################
 
 ################################################################################
