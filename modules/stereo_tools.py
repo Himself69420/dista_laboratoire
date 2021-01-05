@@ -122,7 +122,7 @@ def on_mouse_display_depth_value(event, x, y, flags, params):
 
     if (event == cv2.EVENT_LBUTTONDOWN):
 
-        f, B,distance,cloud,frame,windowName = params
+        distance,cloud,frame,windowName = params
         dist=np.round(np.linalg.norm(cloud[y, x,:]),2)
         depth=np.round(cloud[y,x,2],2)
 

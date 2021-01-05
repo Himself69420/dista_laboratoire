@@ -247,7 +247,7 @@ while (keep_processing):
     fps = int(ff/elapsed)
     print("Frame rate : " + str(fps) + " FPS"+ "\n")
 
-    cv2.setMouseCallback(windowName,on_mouse_display_depth_value, (f, base,distance,cloud,frame,windowName))
+    cv2.setMouseCallback(windowName,on_mouse_display_depth_value, (distance,cloud,frame,windowName))
 
     if key == 27 :
         break
