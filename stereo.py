@@ -154,8 +154,8 @@ while (keep_processing):
         frameL=frames[0]
         frameR=frames[1]
     else:
-        ret,frameL=cap_left.read()
-        ret,frameR=cap_right.read()
+        frameL=cap_left.read()
+        frameR=cap_right.read()
 
 
 #    RECTIFIY
