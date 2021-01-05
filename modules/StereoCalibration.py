@@ -231,7 +231,7 @@ class StereoCalibration():
 
     def reprojection(self, folder):
         """ Dessiner la reprojection """
-        clean_folders([folder], 'reprojection')
+        clean_folders([folder])
 
         images_left = np.sort(glob.glob(self.single_path + 'left*.jpg'))
         images_right = np.sort(glob.glob(self.single_path + 'right*.jpg'))
