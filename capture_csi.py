@@ -23,7 +23,7 @@ folder="captures/captures_calibration/"
 
 # capture_qty=15
 # folder="captures/captures_erreur/"
-clean_folder(folder)
+clean_folders(folder)
 
 
 # Déclaration du périphérique de capture
