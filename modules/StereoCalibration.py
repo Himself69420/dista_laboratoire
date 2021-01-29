@@ -28,8 +28,6 @@ class StereoCalibration():
 
         # Flags de claibration
         self.not_fisheye_flags = cv.CALIB_FIX_K3|cv.CALIB_ZERO_TANGENT_DIST
-        # self.not_fisheye_flags=0
-        self.fisheye_flags=cv.CALIB_RATIONAL_MODEL|cv.CALIB_FIX_K5|cv.CALIB_FIX_K6|cv.CALIB_ZERO_TANGENT_DIST
 
 
         # Déclaration des attributs --------------------------------------------
@@ -127,62 +125,54 @@ class StereoCalibration():
             single_detected_path (str): "path_to_single_images_detected/"
             fisheye (Bool): True pour caméra fisheye
         """
+        # Ménage des folder
         self.single_path=single_path
         self.single_detected_path=single_detected_path
         clean_folders([single_detected_path])
 
+        # Lire images
         self.objpoints_l, self.imgpoints_l, self.imageSize1 = self.__read_single('left')
         self.objpoints_r, self.imgpoints_r, self.imageSize2 = self.__read_single('right')
 
-        if fisheye==True:
-            self.err1, self.M1, self.d1, self.r1, self.t1, stdDeviationsIntrinsics1, stdDeviationsExtrinsics1, self.perViewErrors1 = cv.calibrateCameraExtended(self.objpoints_l, self.imgpoints_l, self.imageSize1, None, None, flags=self.fisheye_flags)
+        # Calibration
+        self.err1, self.M1, self.d1, self.r1, self.t1, stdDeviationsIntrinsics1, stdDeviationsExtrinsics1, self.perViewErrors1 = cv.calibrateCameraExtended(self.objpoints_l, self.imgpoints_l, self.imageSize1, None, None, flags=self.not_fisheye_flags)
 
-            self.err2, self.M2, self.d2, self.r2, self.t2, stdDeviationsIntrinsics2, stdDeviationsExtrinsics2, self.perViewErrors2 = cv.calibrateCameraExtended(self.objpoints_r, self.imgpoints_r, self.imageSize2, None, None, flags=self.fisheye_flags)
-
-        else:
-            self.err1, self.M1, self.d1, self.r1, self.t1, stdDeviationsIntrinsics1, stdDeviationsExtrinsics1, self.perViewErrors1 = cv.calibrateCameraExtended(self.objpoints_l, self.imgpoints_l, self.imageSize1, None, None, flags=self.not_fisheye_flags)
-
-            self.err2, self.M2, self.d2, self.r2, self.t2, stdDeviationsIntrinsics2, stdDeviationsExtrinsics2, self.perViewErrors2 = cv.calibrateCameraExtended(self.objpoints_r, self.imgpoints_r, self.imageSize2, None, None, flags=self.not_fisheye_flags)
+        self.err2, self.M2, self.d2, self.r2, self.t2, stdDeviationsIntrinsics2, stdDeviationsExtrinsics2, self.perViewErrors2 = cv.calibrateCameraExtended(self.objpoints_r, self.imgpoints_r, self.imageSize2, None, None, flags=self.not_fisheye_flags)
 
         # Print erreur de reprojection
         print('Erreur de reprojection RMS calibration individuelle')
         print(self.err1, self.err2)
 
 
-    def calibrateStereo(self, stereo_path, stereo_detected_path, single_detected_path, fisheye=False, calib_2_sets=False, single_path=None):
+    def calibrateStereo(self, stereo_path, stereo_detected_path, single_detected_path, calib_2_sets=False, single_path=None):
         """
         ||Public method||
         Args:
             stereo_path (str): "path_to_stereo_images/"
-            fisheye (Bool): True pour caméra fisheye
             calib_2_sets (Bool):
                 True: pour utiliser des sets de photos différents (un pour la calibration individuelle des caméra et un pour la calibration stéréo)
                 False: pour utiliser un seul set de photo pour la calibration individuelle et la calibration stéréo
             single_path: "path_to_single_images/"
         """
+        # Ménage des folders
         self.stereo_path=stereo_path
         self.stereo_detected_path=stereo_detected_path
         clean_folders([stereo_detected_path])
         if not calib_2_sets:
             single_path=stereo_path
 
-
-        # faire calibration individuelle avant
+        # Faire calibration individuelle avant
         if self.err1==None or self.err2==None:
-            self.calibrateSingle(single_path, single_detected_path, fisheye)
+            self.calibrateSingle(single_path, single_detected_path)
 
-        # deux sets ou un set
+        # Flags
         if calib_2_sets:
             flags = cv.CALIB_FIX_INTRINSIC
         else:
             flags = cv.CALIB_USE_INTRINSIC_GUESS
-        # caméra fisheye
-        if fisheye:
-            flags += self.fisheye_flags
-        else:
-            flags += self.not_fisheye_flags
+        flags += self.not_fisheye_flags
 
-        # calibration stereo
+        # Calibration stereo
         objpoints, imgpoints_l, imgpoints_r = self.__read_stereo()
 
         self.errStereo, _, _, _, _, self.R, self.T, self.E, self.F, self.stereo_per_view_err= cv.stereoCalibrateExtended(objpoints, imgpoints_l, imgpoints_r, self.M1, self.d1, self.M2,self.d2, self.imageSize1, None, None, flags=flags)
