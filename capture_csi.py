@@ -1,6 +1,6 @@
 ##############################################################################################################
 # Projet : Integration cours initiation                                                                      #
-# Description Script : Effectuer une capture synchrone de deux camera                                        #
+# Description Script : Effectuer une capture synchrone de deux camera NANO                                       #
 # Date : 29 aout 2020                                                                                        #
 # Auteur : Carl Beaulieu                                                                                     #
 ##############################################################################################################
@@ -20,8 +20,6 @@ capture_taken=0
 capture_qty=40
 folder="captures/captures_calibration/"
 
-# capture_qty=15
-# folder="captures/captures_erreur/"
 clean_folders([folder])
 
 
