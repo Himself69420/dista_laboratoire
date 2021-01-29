@@ -50,8 +50,8 @@ while(True):
         if capture_taken<capture_qty:
             capture_taken = capture_taken + 1
             text_progress=""
-            filename_l="{}left".format(folder) + str(capture_taken) + ".jpg"
-            filename_r="{}right".format(folder) + str(capture_taken) + ".jpg"
+            filename_l="{}left{:03d}".format(folder,capture_taken) + ".jpg"
+            filename_r="{}right{:03d}".format(folder,capture_taken) + ".jpg"
             cv2.imwrite(filename_l, left_frame)
             cv2.imwrite(filename_r, right_frame)
 
