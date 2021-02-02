@@ -207,6 +207,7 @@ class StereoCalibration():
         # Print erreur de reprojection
         print('Erreur de reprojection RMS calibration individuelle')
         print(self.err1, self.err2)
+        print()
 
 
     def __calibrate_extrinsics(self, flags):
