@@ -18,7 +18,7 @@ text_progress=""
 capture_taken=0
 # Nombres de captures à prendre et folder
 capture_qty=40
-folder="captures/captures_calibration/"
+folder="captures/"
 
 clean_folders([folder])
 

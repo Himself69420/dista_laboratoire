@@ -7,7 +7,7 @@ import argparse
 from modules.StereoCalibration import StereoCalibration
 
 # ================ FOLDERS ==========================
-images_path='captures/captures_calibration/'
+images_path='captures/'
 single_detected_path='output/singles_detected/'
 stereo_detected_path='output/stereo_detected/'
 # ====================================================
