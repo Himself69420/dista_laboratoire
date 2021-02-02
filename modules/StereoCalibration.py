@@ -1,3 +1,8 @@
+"""
+Auteur : Marianne Lado-Roy
+Fichier de la classe StereoCalibration
+"""
+
 import numpy as np
 import cv2 as cv
 import glob, os
@@ -5,14 +10,15 @@ import glob, os
 from modules.util import draw_reprojection, clean_folders, coins_damier, find_corners
 
 
-# Classe contenant les fonctions de calibration
 class StereoCalibration():
 
     def __init__(self, patternSize, squaresize):
         """
         || Constructeur ||
-        patternSize = (nb points per row, nb points per col)
-        squaresize : taille damier en mètres
+        patternSize : tuple(nb points per row, nb points per col)
+                      Nombre de coins internes du damier
+        squaresize :  float
+                      Taille carré du damier en mètres
         """
 
         # Damier ---------------------------------------------------------------
@@ -56,6 +62,9 @@ class StereoCalibration():
     def __read_images(self, images_path):
         """
         ||Private method||
+        Lit les images dans <images_path> et détecte les coins du damier.
+        Args:
+            images_path : (str) <path_to_images>
         """
         # Lire les images ------------------------------------------------------
         images_left = np.sort(glob.glob(images_path + 'left*.jpg'))
@@ -134,12 +143,10 @@ class StereoCalibration():
         """
         ||Public method||
         Calibration individuelle de 2 caméras et calibration stéréo simulatémement
-
         Args:
             images_path (str): "path_to_images/"
             single_detected_path (str): "path_to_single_images_detected/"
             stereo_detected_path (str): "path_to_stereo_images_detected/"
-
         """
         # Folders
         self.images_path=images_path
@@ -167,10 +174,10 @@ class StereoCalibration():
 
         """
         ||Private method||
-        Calibration intrinsèques de 2 caméras : gauche et droite
+        Calibration intrinsèques des 2 caméras
         """
 
-        print('Calibration individuelle:')
+        print('- Calibration individuelle -')
         # GAUCHE
         self.err1, self.M1, self.d1, self.r1, self.t1, self.stdDeviationsIntrinsics1, self.stdDeviationsExtrinsics1, self.perViewErrors1 = cv.calibrateCameraExtended(self.objpoints_l, self.imgpoints_l, self.imageSize1, None, None, flags=flags)
 
@@ -205,8 +212,9 @@ class StereoCalibration():
     def __calibrate_extrinsics(self, flags):
         """
         ||Private method||
+        Calibration stéréo extrinsèque des deux caméras
         """
-        print('Calibration stéréo')
+        print('- Calibration stéréo -')
         self.errStereo, _, _, _, _, self.R, self.T, self.E, self.F, self.perViewErrors = cv.stereoCalibrateExtended(self.objpoints, self.imgpoints_left, self.imgpoints_right, self.M1, self.d1, self.M2,self.d2, self.imageSize1, self.R, self.T, flags=flags)
 
         # Enlever les outliers -------------------------------------------------
@@ -231,6 +239,13 @@ class StereoCalibration():
 
 
     def saveResultsXML(self, left_name='cam1', right_name='cam2'):
+        """
+        || Public method||
+        Enregistre les résultats de la calibration sous forme de fichier .xml
+        Args:
+            left_name (str) : <filename left cam>
+            right_name (str) : <filename right cam >
+        """
 
         # Enregistrer caméra 1:
         s = cv.FileStorage()
@@ -257,7 +272,13 @@ class StereoCalibration():
         s.release()
 
     def reprojection(self, folder, number=None):
-        """ Dessiner la reprojection """
+        """
+        || Public method||
+        Dessine la reprojection des coins sur <number> images et enregistre les images dessinée dans <folder>
+        Args:
+            folder : (str) <path_to_folder>
+            number: (int) nombre d'images à dessiner
+         """
         clean_folders([folder])
 
         # Lire les images
@@ -267,8 +288,10 @@ class StereoCalibration():
 
         # Nombre d'images
         if number is not None:
-            images_left = images_left[:number]
-            images_right = images_right[:number]
+            if number =< len(images_left):
+                images_left = images_left[:number]
+            if number =< len(images_right):
+                images_right = images_right[:number]
 
         # Reprojection caméra de gauche
         index=0
