@@ -26,8 +26,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description='stereo')
 
     parser.add_argument('--adjust', action='store_true', default=False,help='adjust image quality')
-    parser.add_argument('--resolution', type=str, default='HD',help='Resolution : VGA, HD, FHD ,2K')
-    parser.add_argument('--cam_ids', type=str, default=0,help='List of camera USB port id : 0,1,2,3,4...')
+    parser.add_argument('--resolution', type=str, default='VGA',help='Resolution : VGA')
+    parser.add_argument('--cam_ids', type=str, default=(0,1),help='List of camera USB port id : 0,1,2,3,4...')
     parser.add_argument('--depthmap', action='store_true', default=False,help='view depth map instead of disparity map')
     parser.add_argument('--distance', action='store_true', default=False,help='display distance instead of depth')
 
@@ -51,15 +51,15 @@ def get_image_dimension_from_resolution(resolution):
 #        height=376
         width=800
         height=480
-    elif resolution== 'HD' :
-        width=1280
-        height=720
-    elif resolution== 'FHD' :
-        width=1920
-        height=1080
-    elif resolution== '2K' :
-        width=2208
-        height=1242
+    # elif resolution== 'HD' :
+    #     width=1280
+    #     height=720
+    # elif resolution== 'FHD' :
+    #     width=1920
+    #     height=1080
+    # elif resolution== '2K' :
+    #     width=2208
+    #     height=1242
     return width,height
 ##############################################################################
 

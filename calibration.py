@@ -23,6 +23,7 @@ parser.add_argument("squareSize", type=float,
                     help="squareSize: taille d'un carrés du damier en mètre")
 # arguments optionnels
 parser.add_argument("--images", type=str, help="images: path au dossier contenant les images à analyser")
+
 args = parser.parse_args()
 
 patternSize=(args.points_per_row, args.points_per_col)
