@@ -288,9 +288,9 @@ class StereoCalibration():
 
         # Nombre d'images
         if number is not None:
-            if number =< len(images_left):
+            if number <= len(images_left):
                 images_left = images_left[:number]
-            if number =< len(images_right):
+            if number <= len(images_right):
                 images_right = images_right[:number]
 
         # Reprojection caméra de gauche
