@@ -7,11 +7,12 @@ import argparse
 from modules.StereoCalibration import StereoCalibration
 
 # ================ FOLDERS ==========================
-images_path='nano/captures_calibration/'
+images_path='captures/captures_calibration/'
 single_detected_path='output/singles_detected/'
 stereo_detected_path='output/stereo_detected/'
 # ====================================================
 
+# Parser -----------------------------------------------------------------------
 parser = argparse.ArgumentParser()
 # arguments obligatoires
 parser.add_argument("points_per_row", type=int,
@@ -30,7 +31,10 @@ images=args.images
 
 if images is not None:
     images_path=images
+# ------------------------------------------------------------------------------
 
+# Faire la calibration ---------------------------------------------------------
 obj = StereoCalibration(patternSize, squareSize)
 obj.calibrate(images_path, stereo_detected_path, single_detected_path)
 obj.saveResultsXML()
+# ------------------------------------------------------------------------------
